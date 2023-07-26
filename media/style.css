@@ -1,0 +1,32 @@
+:root {
+  --white-bgc: #FBFCFA;
+}
+
+body {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--white-bgc);
+}
+
+.game-container {
+  display: grid;
+  grid-template: repeat(3, auto) / repeat(3, auto);
+  gap: 5px;
+  height: 70vh;
+  width: 70vh;
+  border: 10px solid #403f4c;
+  border-radius: 5px;
+  padding: 5px;
+  background-image: linear-gradient(#ffe367, #ffd621);
+  box-shadow: 0 0 5px rgba(0, 0, 0, .5);
+}
+
+.ttt-cells {
+  height: calc(70vh / 3 - 5);
+  width: calc(70vh / 3 - 5);
+  background-color: #e84855;
+  border-radius: 5px;
+  cursor: pointer;
+}
