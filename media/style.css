@@ -7,13 +7,30 @@
 }
 
 body {
+  margin: 0 30px;
+  background-color: var(--white-bgc);
+}
+
+::selection {
+  background-color: #917575;
+
+}
+
+@font-face {
+  font-family: "Jingle Star";
+  src: url("Jingle\ Star.otf") format("OpenType"),
+  url("Jingle\ Star.ttf") format("TrueType");
+}
+
+.ttt-page {
   height: 100vh;
-  display: flex;
+  display: none;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   gap: 20px;
   background-color: var(--white-bgc);
+  opacity: 0;
 }
 
 .game-container {
@@ -50,4 +67,88 @@ svg {
   display: none;
   font-weight: bold;
   font-size: 1.7rem;
+}
+
+.start-menu {
+  height: 90vh;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--white-bgc);
+}
+
+@keyframes disappear {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes appear {
+  to {
+    opacity: 1;
+  }
+}
+
+.start-menu > h1 {
+  font-family: "Jingle Star";
+  font-size: 4rem;
+  margin: 0;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+form > label {
+  font-size: 1.5rem;
+}
+
+
+input {
+  border: 2px solid black;
+  border-radius: 10px;
+  /* height: 40px; */
+  box-shadow: 0 0 5px rgba(0, 0, 0, .15);
+  background-color: #f2efef;
+  font-family: "Jingle Star";
+  text-align: center;
+  font-size: 1.5rem;
+  width: 50%;
+}
+
+input:focus {
+  border: 3px solid black;
+}
+
+.name-inputs {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+}
+
+.name-inputs > span {
+  font-family: "Jingle Star";
+  font-size: 4rem;
+}
+
+form > button {
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-weight: bold;
+  margin: 30px 0;
+  border: 2px solid black;
+  border-radius: 10px;
+  box-shadow: 0 0 5px rgba(0, 0, 0, .15);
+  background-color: #f2efef;
+  color: black;
+  cursor: pointer;
+  transition: all .2s;
+}
+
+form > button:hover {
+  font-size: 1.5rem;
 }

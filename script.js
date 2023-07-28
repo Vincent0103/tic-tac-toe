@@ -1,30 +1,136 @@
 let gameBoard = (() => {
   let cells;
+  let startMenu;
+  let gameContainer;
 
   let setCells = () => {
     cells = document.querySelectorAll(".ttt-cells");
     return cells;
   }
 
+  let getStartMenu = () => {
+    startMenu = document.querySelector(".start-menu");
+    return startMenu;
+  }
+
+  let getGameContainer = () => {
+    gameContainer = document.querySelector(".ttt-page");
+    return gameContainer;
+  }
+
+  let showStartMenu = (state) => {
+    getStartMenu();
+    getGameContainer();
+
+    // controls the animations for the gameBoard and the startMenu
+    if (state === "appear") {
+      setTimeout(() => {
+
+
+        // remove older animations if any
+        gameContainer.style.animation = "none";
+        startMenu.style.animation = "none";
+        gameContainer.style.opacity = "1";
+        startMenu.style.opacity = "0";
+
+        gameContainer.style.animation = "disappear .5s";
+        gameContainer.style.animationFillMode = "forwards";
+        setTimeout(() => {
+          gameContainer.style.display = "none";
+          startMenu.style.display = "flex";
+          startMenu.style.animation = "appear .5s";
+          startMenu.style.animationFillMode = "forwards";
+          resetGame();
+        }, 500);
+      }, 1000);
+    }
+
+    const startBtn = document.querySelector(".start-menu > form > button");
+    startBtn.addEventListener("mouseover", () => {
+      let randomDeg = Math.round(((Math.random() - 0.5) * 10));
+      startBtn.style.transform = `rotate(${randomDeg}deg)`;
+    })
+    startBtn.addEventListener("mouseout", () => {
+      startBtn.style.transform = "rotate(0)";
+    })
+    startBtn.addEventListener("click", e => {
+      e.preventDefault();
+      const inputs = document.querySelectorAll(".name-inputs > input");
+      let player1;
+      let player2;
+      if (!inputs[0].value) {
+        player1 = players("player1", "cross");
+      }
+      if (!inputs[1].value) {
+        player2 = players("player2", "circle");
+      }
+      if (inputs[0].value) {
+        player1 = players(inputs[0].value, "cross");
+      }
+      if (inputs[1].value) {
+        player2 = players(inputs[1].value, "circle");
+      }
+
+      if (state === "disappear") {
+        gameContainer.style.animation = "none";
+        startMenu.style.animation = "none";
+        startMenu.style.opacity = "1";
+        gameContainer.style.opacity = "0";
+
+        startMenu.style.animation = "disappear .5s";
+        startMenu.style.animationFillMode = "forwards";
+        setTimeout(() => {
+          startMenu.style.display = "none";
+          gameContainer.style.display = "flex";
+          gameContainer.style.animation = "appear .5s";
+          gameContainer.style.animationFillMode = "forwards";
+
+        }, 500);
+      }
+
+      gameBoard.playGameWith(player1, player2);
+    })
+  }
+
+  let resetGame = () => {
+    setCells();
+    const gameState = document.querySelector(".game-state");
+    cells.forEach(cell => {
+      if (cell.innerHTML.includes("svg")) {
+        cell.innerHTML = "";
+      }
+    })
+    gameState.innerHTML = "";
+    displayController.players = displayController.players.splice(0, players.length);
+    displayController.currentlyPlaying = "";
+    displayController.areCellsFilled = false;
+    displayController.isFinished = false;
+  }
+
   let playRound = (cell) => {
     cell.addEventListener("click", () => {
       displayController.addMark(cell);
-      winner = displayController.checkWinner(cell);
-      if (winner instanceof Object) {
-        displayWinner(winner);
-      }
+      displayController.checkWinner(cell);
     });
   }
 
-  let displayWinner = (winner) => {
+  let displayState = (winner) => {
     const gameState = document.querySelector(".game-state");
-    console.log(winner[0]);
-    gameState.innerHTML = `The winner is ${winner[0].name}!`;
     gameState.style.display = "block";
+
+    if (winner instanceof Object) {
+      gameState.textContent = `The winner is ${winner[0].name}!`;
+    } else if (winner === "tie") {
+      gameState.textContent = "That's a tie!";
+    }
+    showStartMenu("appear");
+
   }
 
   let playGameWith = (...players) => {
     displayController.storePlayers(players);
+    getGameContainer();
+    getStartMenu();
 
     setCells();
     cells.forEach(cell => {
@@ -32,7 +138,7 @@ let gameBoard = (() => {
     })
   }
 
-  return {playGameWith, cells, setCells};
+  return {playGameWith, setCells, displayState, showStartMenu};
 
 })();
 
@@ -44,6 +150,7 @@ let displayController = (() => {
   let players = [];
   let currentlyPlaying;
   let isFinished = false;
+  let areCellsFilled = true;
 
   let storePlayers = playersArr => {
     playersArr.forEach(player => {
@@ -151,13 +258,14 @@ let displayController = (() => {
     if (hasWon.count === 3) {
       return true;
     } else {
-      /* do recursive function by searching for a second time
+      /* do recursive function by searching for three times
       for three same mark in a row/diag/column but starting with the
-      secondMarkCell starting from the top of the gameBoard */
-      if (markCellsArr.length >= 2 && funcCall !== 2) {
-        let secondMarkCell = document.querySelector(`.ttt-cells[data-index=\"${markCellsArr[1]}\"]`);
+      secondMarkCell or thirdMarkCell starting from the top of the gameBoard */
+      if (markCellsArr.length >= 3 && funcCall !== 3) {
+        let secondMarkCell = document.querySelector(`.ttt-cells[data-index=\"${markCellsArr[funcCall]}\"]`);
         let markCellIndex = parseInt(secondMarkCell.getAttribute("data-index"));
-        return findThreeInArow(markCellIndex, markCellsArr, 2);
+        funcCall++
+        return findThreeInArow(markCellIndex, markCellsArr, funcCall);
       }
     }
     return false;
@@ -165,6 +273,16 @@ let displayController = (() => {
 
   let checkWinner = (pointedCell) => {
     if (!isFinished) {
+      let cells = gameBoard.setCells();
+
+      for (let cell of cells) {
+        if (!cell.innerHTML.includes("svg")) {
+          areCellsFilled = false;
+          break;
+        }
+      }
+
+
       // gets the players current mark (cross or circle) from click
       const pointedCellMark = pointedCell.querySelector("svg").classList.value;
 
@@ -176,18 +294,23 @@ let displayController = (() => {
 
       if (hasWon) {
         isFinished = true;
+        winner = players.filter(player => pointedCellMark.includes(player.mark));
 
         // return the winning player
-        return players.filter(player => pointedCellMark.includes(player.mark));
-    }
+        return gameBoard.displayState(winner);
+      }
+
+      if (areCellsFilled) {
+        return gameBoard.displayState("tie");
+      }
+
+      areCellsFilled = true;
     }
   }
 
-  return {changeTurn, addMark, players, storePlayers, checkWinner};
+  return {changeTurn, addMark, storePlayers, checkWinner, players, currentlyPlaying, isFinished, areCellsFilled};
 })();
 
 window.addEventListener("DOMContentLoaded", () => {
-  const john = players("john", "cross");
-  const martin = players("martin", "circle");
-  gameBoard.playGameWith(john, martin);
+  gameBoard.showStartMenu("disappear");
 })
