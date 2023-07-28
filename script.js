@@ -1,4 +1,5 @@
 let isFinished = false;
+let currentlyPlaying;
 
 let gameBoard = (() => {
   let cells;
@@ -51,6 +52,8 @@ let gameBoard = (() => {
 
     const startBtn = document.querySelector(".start-menu > form > button");
     startBtn.addEventListener("mouseover", () => {
+
+      // gets a random rotation degree between -5 and 5
       let randomDeg = Math.round(((Math.random() - 0.5) * 10));
       startBtn.style.transform = `rotate(${randomDeg}deg)`;
     })
@@ -62,6 +65,8 @@ let gameBoard = (() => {
       const inputs = document.querySelectorAll(".name-inputs > input");
       let player1;
       let player2;
+
+      // check if the inputs got values in them
       if (!inputs[0].value) {
         player1 = players("player1", "cross");
       }
@@ -90,7 +95,8 @@ let gameBoard = (() => {
         }, 500);
       }
 
-      gameBoard.playGameWith(player1, player2);
+      currentlyPlaying = player1;
+      playGameWith(player1, player2);
     })
   }
 
@@ -106,18 +112,38 @@ let gameBoard = (() => {
   }
 
   let playRound = (cell) => {
+
+    // prevents from multiple clicks occuring when restarting the game
     if (!hasClickedOnCell) {
-      cell.addEventListener("click", function eventHandler() {
+
+      cell.addEventListener("click", () => {
         displayController.addMark(cell);
         displayController.checkWinner(cell);
+        displayPlayersTurn();
         hasClickedOnCell = true;
       });
+
+      cell.addEventListener("mouseenter", () => {
+        displayController.hoverMark(cell, "mouseenter");
+      })
+
+      cell.addEventListener("mouseleave", () => {
+        displayController.hoverMark(cell, "mouseleave");
+      })
     }
   }
 
-  let displayState = (winner) => {
+  let displayPlayersTurn = () => {
     const gameState = document.querySelector(".game-state");
-    gameState.style.display = "block";
+
+    if (!isFinished) {
+      gameState.textContent = `${currentlyPlaying.name}'s turn`;
+    }
+  }
+
+  let dsiplayWinState = (winner) => {
+    const gameState = document.querySelector(".game-state");
+    gameState.textContent = "";
 
     const p = document.createElement("p");
     gameState.appendChild(p);
@@ -128,6 +154,8 @@ let gameBoard = (() => {
     gameState.appendChild(restartBtn);
 
     if (winner instanceof Object) {
+
+      // winner[0] because the returned winner is player object
       p.textContent = `The winner is ${winner[0].name}!`;
     } else if (winner === "tie") {
       p.textContent = "That's a tie!";
@@ -149,16 +177,14 @@ let gameBoard = (() => {
 
   let playGameWith = (...players) => {
     displayController.storePlayers(players);
-    getGameContainer();
-    getStartMenu();
-
     setCells();
     cells.forEach(cell => {
+      displayPlayersTurn();
       playRound(cell);
     })
   }
 
-  return {playGameWith, setCells, displayState, showStartMenu};
+  return {setCells, dsiplayWinState, showStartMenu};
 
 })();
 
@@ -168,10 +194,11 @@ let players = (name, mark) => {
 
 let displayController = (() => {
   let players = [];
-  let currentlyPlaying;
   let areCellsFilled = true;
 
   let storePlayers = playersArr => {
+
+    // remove stored players from the old game (if any) and the new ones when restarting
     players.splice(0, players.length);
     playersArr.forEach(player => {
       players.push(player);
@@ -183,13 +210,45 @@ let displayController = (() => {
   }
 
   let addMark = cell => {
+    let cellSvg = cell.querySelector("svg");
+
+    // checks if the mark from the hovering cell is not added yet; if true, add it
+    if (!isFinished && cellSvg.style.opacity === "0.5") {
+      cellSvg.style.opacity = 1;
+      changeTurn();
+    }
+  }
+
+  /* display the player's mark on hover but with a low opacity
+  to indicate that it's a possible move */
+  let hoverMark = (cell, e) => {
+    let cellSvg;
+
+    if (!currentlyPlaying) {
+      currentlyPlaying = players[0];
+    }
+
     if (!isFinished) {
-      if (!cell.innerHTML.includes("svg")) {
-        changeTurn();
-        if (currentlyPlaying.mark === "cross") {
-          cell.innerHTML = "<svg class=\"cross-cell\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><path d=\"M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z\" /></svg>";
-        } else if (currentlyPlaying.mark === "circle") {
-          cell.innerHTML = "<svg class=\"circle-cell\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><path d=\"M12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z\" /></svg>";
+      if (e === "mouseenter") {
+        if (!cell.querySelector("svg")) {
+          if (currentlyPlaying.mark === "cross") {
+            cell.innerHTML = "<svg class=\"cross-cell\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><path d=\"M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z\" /></svg>";
+          } else if (currentlyPlaying.mark === "circle") {
+            cell.innerHTML = "<svg class=\"circle-cell\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><path d=\"M12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z\" /></svg>";
+          }
+          cellSvg = cell.querySelector("svg");
+          cellSvg.style.opacity = .5;
+
+          /* actually verifies if the mouse is hovering on an added mark.
+          If so, we avoid any conflicts by adding this condition and move on */
+        } else if (cell.querySelector("svg").style.opacity === "1") {
+          ;
+        }
+
+      } else if (e === "mouseleave") {
+        cellSvg = cell.querySelector("svg");
+        if (cellSvg.style.opacity === "0.5") {
+          cell.removeChild(cellSvg);
         }
       }
     }
@@ -222,7 +281,9 @@ let displayController = (() => {
     let hasWon = hasWonObj();
 
     /* Checks 3 marks (cross or circle) in a row/diagonal/column
-    with this pattern of searching:
+    with this pattern of searching and associating each cell
+    with a data-index attribute to easily locate them:
+
     1) xxx ||
 
     2)  x ||
@@ -266,7 +327,8 @@ let displayController = (() => {
         }
       }
 
-      // check if three marks are in a row/diag/column
+      /* checks if three marks are in a row/diag/column,
+      if not we do the next pattern of searching */
       if (hasWon.count != 3) {
         hasWon.count = 0;
         hasWon.cellInArr = false;
@@ -278,21 +340,29 @@ let displayController = (() => {
     if (hasWon.count === 3) {
       return true;
     } else {
-      /* do recursive function by searching for three times
+
+      /* do recursive function by searching three times,
       for three same mark in a row/diag/column but starting with the
-      secondMarkCell or thirdMarkCell starting from the top of the gameBoard */
+      first three cells with the same mark at a time
+      starting from the top of the gameBoard */
       if (markCellsArr.length >= 3 && funcCall !== 3) {
-        let secondMarkCell = document.querySelector(`.ttt-cells[data-index=\"${markCellsArr[funcCall]}\"]`);
-        let markCellIndex = parseInt(secondMarkCell.getAttribute("data-index"));
-        funcCall++
+        let currentMarkCell = document.querySelector(`.ttt-cells[data-index=\"${markCellsArr[funcCall]}\"]`);
+        let markCellIndex = parseInt(currentMarkCell.getAttribute("data-index"));
+        funcCall++;
         return findThreeInArow(markCellIndex, markCellsArr, funcCall);
       }
     }
+
+    /* returns false if has currently didn't find
+    the same mark three in a row/diag/column */
     return false;
   }
 
   let checkWinner = (pointedCell) => {
+    /* player able to click on cells when currently checking if there are
+    any winners */
     hasClickedOnCell = false;
+
     if (!isFinished) {
       let cells = gameBoard.setCells();
 
@@ -318,11 +388,11 @@ let displayController = (() => {
         winner = players.filter(player => pointedCellMark.includes(player.mark));
 
         // return the winning player
-        return gameBoard.displayState(winner);
+        return gameBoard.dsiplayWinState(winner);
       }
 
       if (areCellsFilled) {
-        return gameBoard.displayState("tie");
+        return gameBoard.dsiplayWinState("tie");
       }
 
       areCellsFilled = true;
@@ -332,7 +402,7 @@ let displayController = (() => {
     }
   }
 
-  return {changeTurn, addMark, storePlayers, checkWinner, players, currentlyPlaying, isFinished, areCellsFilled};
+  return {changeTurn, addMark, hoverMark, storePlayers, checkWinner};
 })();
 
 window.addEventListener("DOMContentLoaded", () => {

@@ -6,7 +6,7 @@
 
 ## features to add
 
-- preview move on hover on the gameBoard (eg: cross or circle on hover)
+- preview move on hover on the gameBoard (eg: cross or circle on hover) (*ADDED*)
 
 ### Apologizes
 
