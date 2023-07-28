@@ -1,11 +1,13 @@
 let isFinished = false;
 let currentlyPlaying;
+let userCanClick = true;
 
 let gameBoard = (() => {
   let cells;
   let startMenu;
   let gameContainer;
   let hasClickedOnCell = false;
+  let hasClickedOnBotBtn = false;
 
   let setCells = () => {
     cells = document.querySelectorAll(".ttt-cells");
@@ -20,6 +22,30 @@ let gameBoard = (() => {
   let getGameContainer = () => {
     gameContainer = document.querySelector(".ttt-page");
     return gameContainer;
+  }
+
+  let handleBotBtn = (botBtn) => {
+
+    // prevents events occuring more than once
+    if (!hasClickedOnBotBtn) {
+      botBtn.addEventListener("click", () => {
+        if (!botBtn.classList.contains("bot-btn-active")) {
+          botBtn.classList.add("bot-btn-active");
+        } else {
+          botBtn.classList.remove("bot-btn-active");
+          console.log(botBtn);
+        }
+        botBtn.classList.remove("bot-btn-hover");
+      })
+
+      botBtn.addEventListener("mouseenter", () => {
+        botBtn.classList.add("bot-btn-hover");
+      })
+
+      botBtn.addEventListener("mouseleave", () => {
+        botBtn.classList.remove("bot-btn-hover");
+      })
+    }
   }
 
   let showStartMenu = (state) => {
@@ -51,6 +77,10 @@ let gameBoard = (() => {
     }
 
     const startBtn = document.querySelector(".start-menu > form > button");
+    const botBtn = document.querySelector(".name-inputs > .bot-btn");
+
+    handleBotBtn(botBtn);
+
     startBtn.addEventListener("mouseover", () => {
 
       // gets a random rotation degree between -5 and 5
@@ -62,9 +92,11 @@ let gameBoard = (() => {
     })
     startBtn.addEventListener("click", e => {
       e.preventDefault();
+      hasClickedOnBotBtn = true;
       const inputs = document.querySelectorAll(".name-inputs > input");
       let player1;
       let player2;
+      userCanClick = true;
 
       // check if the inputs got values in them
       if (!inputs[0].value) {
@@ -78,6 +110,10 @@ let gameBoard = (() => {
       }
       if (inputs[1].value) {
         player2 = players(inputs[1].value, "circle");
+      }
+
+      if (botBtn.classList.contains("bot-btn-active")) {
+        player2.isAi = true;
       }
 
       // controls the animations on gameBoard and startMenu
@@ -102,6 +138,7 @@ let gameBoard = (() => {
 
   let resetGame = () => {
     setCells();
+    hasClickedOnBotBtn = false;
     const gameState = document.querySelector(".game-state");
     cells.forEach(cell => {
       if (cell.innerHTML.includes("svg")) {
@@ -117,18 +154,20 @@ let gameBoard = (() => {
     if (!hasClickedOnCell) {
 
       cell.addEventListener("click", () => {
-        displayController.addMark(cell);
-        displayController.checkWinner(cell);
-        displayPlayersTurn();
-        hasClickedOnCell = true;
+        if (userCanClick) {
+          console.log(userCanClick);
+          displayController.addMark(cell);
+          displayController.checkWinner(cell);
+          hasClickedOnCell = true;
+        }
       });
 
       cell.addEventListener("mouseenter", () => {
-        displayController.hoverMark(cell, "mouseenter");
+        if (userCanClick) displayController.hoverMark(cell, "mouseenter");
       })
 
       cell.addEventListener("mouseleave", () => {
-        displayController.hoverMark(cell, "mouseleave");
+        if (userCanClick) displayController.hoverMark(cell, "mouseleave");
       })
     }
   }
@@ -141,7 +180,7 @@ let gameBoard = (() => {
     }
   }
 
-  let dsiplayWinState = (winner) => {
+  let displayWinState = (winner) => {
     const gameState = document.querySelector(".game-state");
     gameState.textContent = "";
 
@@ -178,18 +217,18 @@ let gameBoard = (() => {
   let playGameWith = (...players) => {
     displayController.storePlayers(players);
     setCells();
+    displayPlayersTurn();
     cells.forEach(cell => {
-      displayPlayersTurn();
       playRound(cell);
     })
   }
 
-  return {setCells, dsiplayWinState, showStartMenu};
+  return {setCells, displayWinState, displayPlayersTurn, showStartMenu};
 
 })();
 
-let players = (name, mark) => {
-  return {name, mark};
+let players = (name, mark, isAi=false) => {
+  return {name, mark, isAi};
 }
 
 let displayController = (() => {
@@ -207,6 +246,11 @@ let displayController = (() => {
 
   let changeTurn = () => {
     currentlyPlaying = (currentlyPlaying === players[0]) ? players[1] : players[0];
+
+    if (currentlyPlaying.isAi) {
+      aiController.addMark();
+    }
+    gameBoard.displayPlayersTurn();
   }
 
   let addMark = cell => {
@@ -247,7 +291,7 @@ let displayController = (() => {
 
       } else if (e === "mouseleave") {
         cellSvg = cell.querySelector("svg");
-        if (cellSvg.style.opacity === "0.5") {
+        if (cellSvg && cellSvg.style.opacity === "0.5") {
           cell.removeChild(cellSvg);
         }
       }
@@ -388,12 +432,12 @@ let displayController = (() => {
         winner = players.filter(player => pointedCellMark.includes(player.mark));
 
         // return the winning player
-        return gameBoard.dsiplayWinState(winner);
+        return gameBoard.displayWinState(winner);
       }
 
       if (areCellsFilled) {
         isFinished = true;
-        return gameBoard.dsiplayWinState("tie");
+        return gameBoard.displayWinState("tie");
       }
 
       areCellsFilled = true;
@@ -405,6 +449,47 @@ let displayController = (() => {
 
   return {changeTurn, addMark, hoverMark, storePlayers, checkWinner};
 })();
+
+let aiController = (() => {
+  let chooseOptimumCell = () => {
+    let avaiableCells = [];
+    const cells = gameBoard.setCells();
+    cells.forEach(cell => {
+      if (!cell.innerHTML.includes("svg")) {
+        avaiableCells.push(cell.getAttribute("data-index"));
+      }
+    })
+
+    return avaiableCells;
+  }
+
+  let addMark = () => {
+    const avaiableCells = chooseOptimumCell();
+    if (avaiableCells.length > 0) {
+      const choosenCellIndex = avaiableCells[Math.floor(Math.random() * avaiableCells.length)];
+      let choosenCell;
+      const cells = gameBoard.setCells();
+      cells.forEach(cell => {
+        if (parseInt(cell.getAttribute("data-index")) === parseInt(choosenCellIndex)) {
+          console.log("doing");
+          choosenCell = cell;
+        }
+      })
+
+      userCanClick = false;
+      setTimeout(() => {
+        if (!isFinished) {
+          choosenCell.innerHTML = "<svg class=\"circle-cell\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><path d=\"M12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z\" /></svg>";
+          displayController.checkWinner(choosenCell);
+          displayController.changeTurn();
+          userCanClick = true;
+        }
+      }, 200);
+    }
+  }
+
+  return {addMark}
+})()
 
 window.addEventListener("DOMContentLoaded", () => {
   gameBoard.showStartMenu("disappear");

@@ -116,13 +116,16 @@ form > label {
 input {
   border: 2px solid black;
   border-radius: 10px;
-  /* height: 40px; */
   box-shadow: 0 0 5px rgba(0, 0, 0, .15);
   background-color: #f2efef;
   font-family: "Jingle Star";
   text-align: center;
   font-size: 1.5rem;
   width: 50%;
+}
+
+input#player2 {
+  width: 40%;
 }
 
 input:focus {
@@ -138,6 +141,31 @@ input:focus {
 .name-inputs > span {
   font-family: "Jingle Star";
   font-size: 4rem;
+}
+
+.name-inputs > button {
+  position: relative;
+  flex: auto;
+  height: 48px;
+  width: 50px;
+  margin: 0;
+  transition: all .1s;
+}
+
+.bot-btn-hover,
+.bot-btn-active {
+  filter: invert(1);
+  border: 4px double;
+  padding: 21px 22px;
+}
+
+.name-inputs > button > svg {
+  position: absolute;
+  top: 17%;
+  left: 17%;
+  height: 30px;
+  width: 30px;
+  transition: all .1s;
 }
 
 button {
