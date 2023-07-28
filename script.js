@@ -170,7 +170,7 @@ let gameBoard = (() => {
         restartBtn.style.animation = "appear .5s";
         restartBtn.style.animationFillMode = "forwards";
       }, 500)
-    }, 3000)
+    }, 2000)
     showStartMenu("appear");
 
   }
