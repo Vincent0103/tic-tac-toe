@@ -1,7 +1,10 @@
+let isFinished = false;
+
 let gameBoard = (() => {
   let cells;
   let startMenu;
   let gameContainer;
+  let hasClickedOnCell = false;
 
   let setCells = () => {
     cells = document.querySelectorAll(".ttt-cells");
@@ -19,30 +22,31 @@ let gameBoard = (() => {
   }
 
   let showStartMenu = (state) => {
+    let restartBtn = document.querySelector(".game-state > button");
     getStartMenu();
     getGameContainer();
 
-    // controls the animations for the gameBoard and the startMenu
-    if (state === "appear") {
-      setTimeout(() => {
+    if (restartBtn) {
+      restartBtn.addEventListener("click", () => {
+        // controls the animations for the gameBoard and the startMenu
+        if (state === "appear") {
 
+          // remove older animations if any
+          gameContainer.style.animation = "none";
+          startMenu.style.animation = "none";
 
-        // remove older animations if any
-        gameContainer.style.animation = "none";
-        startMenu.style.animation = "none";
-        gameContainer.style.opacity = "1";
-        startMenu.style.opacity = "0";
-
-        gameContainer.style.animation = "disappear .5s";
-        gameContainer.style.animationFillMode = "forwards";
-        setTimeout(() => {
-          gameContainer.style.display = "none";
-          startMenu.style.display = "flex";
-          startMenu.style.animation = "appear .5s";
-          startMenu.style.animationFillMode = "forwards";
-          resetGame();
-        }, 500);
-      }, 1000);
+          gameContainer.style.animation = "disappear .5s";
+          gameContainer.style.animationFillMode = "forwards";
+          setTimeout(() => {
+            gameContainer.style.display = "none";
+            startMenu.style.display = "flex";
+            startMenu.style.animation = "appear .5s";
+            startMenu.style.animationFillMode = "forwards";
+            resetGame();
+            isFinished = false;
+          }, 500);
+        }
+      })
     }
 
     const startBtn = document.querySelector(".start-menu > form > button");
@@ -71,11 +75,10 @@ let gameBoard = (() => {
         player2 = players(inputs[1].value, "circle");
       }
 
+      // controls the animations on gameBoard and startMenu
       if (state === "disappear") {
         gameContainer.style.animation = "none";
         startMenu.style.animation = "none";
-        startMenu.style.opacity = "1";
-        gameContainer.style.opacity = "0";
 
         startMenu.style.animation = "disappear .5s";
         startMenu.style.animationFillMode = "forwards";
@@ -84,7 +87,6 @@ let gameBoard = (() => {
           gameContainer.style.display = "flex";
           gameContainer.style.animation = "appear .5s";
           gameContainer.style.animationFillMode = "forwards";
-
         }, 500);
       }
 
@@ -101,28 +103,46 @@ let gameBoard = (() => {
       }
     })
     gameState.innerHTML = "";
-    displayController.players = displayController.players.splice(0, players.length);
-    displayController.currentlyPlaying = "";
-    displayController.areCellsFilled = false;
-    displayController.isFinished = false;
   }
 
   let playRound = (cell) => {
-    cell.addEventListener("click", () => {
-      displayController.addMark(cell);
-      displayController.checkWinner(cell);
-    });
+    if (!hasClickedOnCell) {
+      cell.addEventListener("click", function eventHandler() {
+        displayController.addMark(cell);
+        displayController.checkWinner(cell);
+        hasClickedOnCell = true;
+      });
+    }
   }
 
   let displayState = (winner) => {
     const gameState = document.querySelector(".game-state");
     gameState.style.display = "block";
 
+    const p = document.createElement("p");
+    gameState.appendChild(p);
+
+    const restartBtn = document.createElement("button");
+    restartBtn.textContent = "RESTART?";
+    restartBtn.style.display = "none";
+    gameState.appendChild(restartBtn);
+
     if (winner instanceof Object) {
-      gameState.textContent = `The winner is ${winner[0].name}!`;
+      p.textContent = `The winner is ${winner[0].name}!`;
     } else if (winner === "tie") {
-      gameState.textContent = "That's a tie!";
+      p.textContent = "That's a tie!";
     }
+
+    setTimeout(() => {
+      p.style.animation = "disappear .5s";
+      p.style.animationFillMode = "forwards";
+      setTimeout(() => {
+        p.style.display = "none";
+        restartBtn.style.display = "block";
+        restartBtn.style.animation = "appear .5s";
+        restartBtn.style.animationFillMode = "forwards";
+      }, 500)
+    }, 3000)
     showStartMenu("appear");
 
   }
@@ -149,10 +169,10 @@ let players = (name, mark) => {
 let displayController = (() => {
   let players = [];
   let currentlyPlaying;
-  let isFinished = false;
   let areCellsFilled = true;
 
   let storePlayers = playersArr => {
+    players.splice(0, players.length);
     playersArr.forEach(player => {
       players.push(player);
     })
@@ -272,6 +292,7 @@ let displayController = (() => {
   }
 
   let checkWinner = (pointedCell) => {
+    hasClickedOnCell = false;
     if (!isFinished) {
       let cells = gameBoard.setCells();
 
@@ -305,6 +326,9 @@ let displayController = (() => {
       }
 
       areCellsFilled = true;
+    } else {
+      hasWon = false;
+      areCellsFilled = false;
     }
   }
 

@@ -80,12 +80,18 @@ svg {
 }
 
 @keyframes disappear {
+  from {
+    opacity: 1;
+  }
   to {
     opacity: 0;
   }
 }
 
 @keyframes appear {
+  from {
+    opacity: 0;
+  }
   to {
     opacity: 1;
   }
@@ -135,7 +141,7 @@ input:focus {
   font-size: 4rem;
 }
 
-form > button {
+button {
   padding: 10px 20px;
   font-size: 1rem;
   font-weight: bold;
@@ -149,6 +155,18 @@ form > button {
   transition: all .2s;
 }
 
-form > button:hover {
+button:hover {
   font-size: 1.5rem;
+}
+
+.game-state > button {
+  margin: 0;
+}
+
+.game-state > button:hover {
+  font-size: 1.2rem;
+}
+
+p {
+  margin: 0;
 }
