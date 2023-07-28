@@ -392,6 +392,7 @@ let displayController = (() => {
       }
 
       if (areCellsFilled) {
+        isFinished = true;
         return gameBoard.dsiplayWinState("tie");
       }
 
