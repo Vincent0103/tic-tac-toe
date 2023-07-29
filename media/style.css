@@ -197,3 +197,8 @@ button:hover {
 p {
   margin: 0;
 }
+
+small#bot-advertisement {
+  display: none;
+  color: rgb(55, 55, 55);
+}

@@ -28,12 +28,14 @@ let gameBoard = (() => {
 
     // prevents events occuring more than once
     if (!hasClickedOnBotBtn) {
+      let botAdvertisement = document.querySelector("small#bot-advertisement");
       botBtn.addEventListener("click", () => {
         if (!botBtn.classList.contains("bot-btn-active")) {
           botBtn.classList.add("bot-btn-active");
+          botAdvertisement.style.display = "block";
         } else {
           botBtn.classList.remove("bot-btn-active");
-          console.log(botBtn);
+          botAdvertisement.style.display = "none";
         }
         botBtn.classList.remove("bot-btn-hover");
       })
